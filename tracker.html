@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Social Content Tracker | Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f9fafb;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 1);
+            border: 1px solid rgba(229, 231, 235, 1);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .loading-spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3b82f6;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <header class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">Mi Tracker de Contenido</h1>
+                <p class="text-gray-500">Analiza el rendimiento de tus redes sociales en tiempo real.</p>
+            </div>
+            <div id="statusIndicator" class="flex items-center gap-2 px-4 py-2 bg-white rounded-full border border-gray-200 shadow-sm">
+                <div class="w-2 h-2 rounded-full bg-green-500"></div>
+                <span class="text-sm font-medium text-gray-600">Conectado a Google Sheets</span>
+            </div>
+        </header>
+
+        <!-- KPI Dashboard -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="glass-card p-6 rounded-2xl">
+                <p class="text-sm font-medium text-gray-500 uppercase tracking-wider">ER Promedio</p>
+                <h2 id="kpi-avg-er" class="text-3xl font-bold text-blue-600 mt-1">0.00%</h2>
+            </div>
+            <div class="glass-card p-6 rounded-2xl">
+                <p class="text-sm font-medium text-gray-500 uppercase tracking-wider">Mejor Formato</p>
+                <h2 id="kpi-best-format" class="text-3xl font-bold text-purple-600 mt-1">-</h2>
+            </div>
+            <div class="glass-card p-6 rounded-2xl">
+                <p class="text-sm font-medium text-gray-500 uppercase tracking-wider">Total Interacciones</p>
+                <h2 id="kpi-total-interactions" class="text-3xl font-bold text-orange-600 mt-1">0</h2>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            <!-- Registro Form -->
+            <section class="lg:col-span-4">
+                <div class="glass-card p-6 rounded-2xl sticky top-8">
+                    <h3 class="text-xl font-semibold mb-6 text-gray-800">Registrar Contenido</h3>
+                    <form id="trackerForm" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Fecha</label>
+                            <input type="date" id="fecha" required class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Temática</label>
+                            <input type="text" id="tematica" placeholder="Ej: Tips de React" required class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Formato</label>
+                            <select id="formato" required class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white">
+                                <option value="Reel/TikTok">Reel/TikTok</option>
+                                <option value="Carrusel">Carrusel</option>
+                                <option value="Imagen">Imagen</option>
+                                <option value="Historia">Historia</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Alcance (Impresiones)</label>
+                            <input type="number" id="alcance" min="1" required class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Likes</label>
+                                <input type="number" id="likes" min="0" value="0" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Comentarios</label>
+                                <input type="number" id="comentarios" min="0" value="0" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Guardados</label>
+                                <input type="number" id="guardados" min="0" value="0" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Compartidos</label>
+                                <input type="number" id="compartidos" min="0" value="0" class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
+                            </div>
+                        </div>
+
+                        <button type="submit" id="btnSubmit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl transition-colors shadow-lg shadow-blue-200 flex items-center justify-center gap-2">
+                            <span>Registrar Contenido</span>
+                        </button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- Historial Table -->
+            <section class="lg:col-span-8">
+                <div class="glass-card rounded-2xl overflow-hidden">
+                    <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-white">
+                        <h3 class="text-xl font-semibold text-gray-800">Historial de Publicaciones</h3>
+                        <button onclick="refreshData()" class="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                            Actualizar
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase">Fecha</th>
+                                    <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase">Tema</th>
+                                    <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase">Formato</th>
+                                    <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase text-right">Alcance</th>
+                                    <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase text-right">Interacciones</th>
+                                    <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase text-right">Engagement</th>
+                                    <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase text-center">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaCuerpo" class="divide-y divide-gray-100">
+                                <!-- Datos cargados dinámicamente -->
+                            </tbody>
+                        </table>
+                        <div id="loader" class="hidden p-12 flex justify-center items-center flex-col gap-4">
+                            <div class="loading-spinner"></div>
+                            <p class="text-sm text-gray-500 font-medium">Sincronizando con Google Sheets...</p>
+                        </div>
+                        <div id="emptyState" class="hidden p-12 text-center">
+                            <p class="text-gray-400">No hay registros aún. ¡Empieza a trackear tu contenido!</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed bottom-8 right-8 px-6 py-3 rounded-xl shadow-2xl bg-gray-900 text-white transform translate-y-24 opacity-0 transition-all duration-300 z-50">
+    </div>
+
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbxA-3l6h-uxnf1uxlXxsKZKn5pRoyqAEX0OWTOQdY8vjFB_430_yBpDB2dmwRjadio/exec";
+        
+        // Elementos del DOM
+        const form = document.getElementById('trackerForm');
+        const tablaCuerpo = document.getElementById('tablaCuerpo');
+        const loader = document.getElementById('loader');
+        const emptyState = document.getElementById('emptyState');
+        const btnSubmit = document.getElementById('btnSubmit');
+
+        let dataCache = [];
+
+        // Funciones de API
+       async function guardarDatos(datos) {
+    try {
+        const respuesta = await fetch(API_URL, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(datos)
+        });
+
+        if (!respuesta.ok) throw new Error("Error en la respuesta");
+
+        return true;
+    } catch (error) {
+        console.error("Error al guardar:", error);
+        return false;
+    }
+}
+
+        async function cargarDatos() {
+            try {
+                mostrarLoader(true);
+                const respuesta = await fetch(API_URL);
+                if (!respuesta.ok) throw new Error("Error en la red");
+                const datos = await respuesta.json();
+                dataCache = datos;
+                renderizarApp(datos);
+                return datos;
+            } catch (error) {
+                console.error("Error al cargar:", error);
+                showToast("Error al conectar con la base de datos", "error");
+                return [];
+            } finally {
+                mostrarLoader(false);
+            }
+        }
+
+        async function eliminarRegistro(index) {
+            if (!confirm("¿Seguro que quieres eliminar este registro?")) return;
+            
+            showToast("Eliminando...", "loading");
+            try {
+                // En Apps Script solemos manejar acciones mediante parámetros en el POST o GET
+                // Por simplicidad en esta estructura, enviamos una acción DELETE simulada
+                await fetch(`${API_URL}?action=delete&index=${index}`, { method: "GET", mode: "no-cors" });
+                
+                // Refrescamos localmente
+                await refreshData();
+                showToast("Registro eliminado con éxito", "success");
+            } catch (error) {
+                showToast("Error al eliminar", "error");
+            }
+        }
+
+        // Lógica de Renderizado
+        function renderizarApp(datos) {
+            // Limpiar tabla
+            tablaCuerpo.innerHTML = "";
+            
+            if (!datos || datos.length === 0) {
+                emptyState.classList.remove('hidden');
+                actualizarDashboard([]);
+                return;
+            }
+            
+            emptyState.classList.add('hidden');
+
+            // Ordenar por fecha (descendente)
+            const datosOrdenados = [...datos].sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+
+            datosOrdenados.forEach((item, idx) => {
+                const totalInteractions = parseInt(item.likes) + parseInt(item.comentarios) + parseInt(item.guardados) + parseInt(item.compartidos);
+                const engagement = item.alcance > 0 ? ((totalInteractions / item.alcance) * 100).toFixed(2) : 0;
+                
+                // Color del Engagement
+                let colorClass = "text-gray-900";
+                if (engagement > 5) colorClass = "text-green-600 font-bold";
+                else if (engagement < 2) colorClass = "text-red-600 font-bold";
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-gray-50 transition-colors";
+                tr.innerHTML = `
+                    <td class="px-6 py-4 text-sm text-gray-600">${formatearFecha(item.fecha)}</td>
+                    <td class="px-6 py-4 text-sm font-medium text-gray-800">${item.tematica}</td>
+                    <td class="px-6 py-4 text-sm">
+                        <span class="px-2 py-1 bg-gray-100 rounded-md text-gray-600 text-xs font-medium">${item.formato}</span>
+                    </td>
+                    <td class="px-6 py-4 text-sm text-right text-gray-600 font-mono">${item.alcance.toLocaleString()}</td>
+                    <td class="px-6 py-4 text-sm text-right text-gray-600 font-mono">${totalInteractions.toLocaleString()}</td>
+                    <td class="px-6 py-4 text-sm text-right ${colorClass} font-mono">${engagement}%</td>
+                    <td class="px-6 py-4 text-center">
+                        <button onclick="eliminarRegistro(${idx})" class="text-gray-400 hover:text-red-500 p-1 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        </button>
+                    </td>
+                `;
+                tablaCuerpo.appendChild(tr);
+            });
+
+            actualizarDashboard(datos);
+        }
+
+        function actualizarDashboard(datos) {
+            if (datos.length === 0) {
+                document.getElementById('kpi-avg-er').innerText = "0.00%";
+                document.getElementById('kpi-best-format').innerText = "-";
+                document.getElementById('kpi-total-interactions').innerText = "0";
+                return;
+            }
+
+            let totalER = 0;
+            let totalIntGlobal = 0;
+            const formatoCounts = {};
+
+            datos.forEach(item => {
+                const totalInt = parseInt(item.likes) + parseInt(item.comentarios) + parseInt(item.guardados) + parseInt(item.compartidos);
+                const er = item.alcance > 0 ? (totalInt / item.alcance) : 0;
+                
+                totalER += er;
+                totalIntGlobal += totalInt;
+                
+                // Trackear mejor formato basado en promedio de ER por formato
+                if (!formatoCounts[item.formato]) formatoCounts[item.formato] = { totalEr: 0, count: 0 };
+                formatoCounts[item.formato].totalEr += er;
+                formatoCounts[item.formato].count += 1;
+            });
+
+            // Promedio Global
+            const avgER = ((totalER / datos.length) * 100).toFixed(2);
+            document.getElementById('kpi-avg-er').innerText = `${avgER}%`;
+            document.getElementById('kpi-total-interactions').innerText = totalIntGlobal.toLocaleString();
+
+            // Encontrar mejor formato
+            let bestFormat = "-";
+            let maxAvg = -1;
+            for (const f in formatoCounts) {
+                const avg = formatoCounts[f].totalEr / formatoCounts[f].count;
+                if (avg > maxAvg) {
+                    maxAvg = avg;
+                    bestFormat = f;
+                }
+            }
+            document.getElementById('kpi-best-format').innerText = bestFormat;
+        }
+
+        // Helpers
+        function formatearFecha(fechaStr) {
+            const op = { year: 'numeric', month: 'short', day: 'numeric' };
+            return new Date(fechaStr).toLocaleDateString('es-ES', op);
+        }
+
+        function mostrarLoader(show) {
+            if (show) {
+                loader.classList.remove('hidden');
+                tablaCuerpo.classList.add('hidden');
+            } else {
+                loader.classList.add('hidden');
+                tablaCuerpo.classList.remove('hidden');
+            }
+        }
+
+        function showToast(message, type = "success") {
+            const toast = document.getElementById('toast');
+            toast.innerText = message;
+            
+            if (type === "error") toast.className = toast.className.replace('bg-gray-900', 'bg-red-600');
+            else toast.className = toast.className.replace('bg-red-600', 'bg-gray-900');
+
+            toast.classList.remove('translate-y-24', 'opacity-0');
+            
+            setTimeout(() => {
+                toast.classList.add('translate-y-24', 'opacity-0');
+            }, 3000);
+        }
+
+        async function refreshData() {
+            await cargarDatos();
+        }
+
+        // Event Listeners
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = {
+                fecha: document.getElementById('fecha').value,
+                tematica: document.getElementById('tematica').value,
+                formato: document.getElementById('formato').value,
+                alcance: parseInt(document.getElementById('alcance').value),
+                likes: parseInt(document.getElementById('likes').value) || 0,
+                comentarios: parseInt(document.getElementById('comentarios').value) || 0,
+                guardados: parseInt(document.getElementById('guardados').value) || 0,
+                compartidos: parseInt(document.getElementById('compartidos').value) || 0
+            };
+
+            // UI State
+            btnSubmit.disabled = true;
+            btnSubmit.innerHTML = `<div class="loading-spinner border-white border-t-transparent w-5 h-5"></div> <span>Guardando...</span>`;
+
+            const exito = await guardarDatos(formData);
+
+            if (exito) {
+                showToast("¡Contenido registrado!");
+                form.reset();
+                // por lo que forzamos un re-fetch después de un pequeño delay
+                setTimeout(refreshData, 1500);
+            } else {
+                showToast("Error al guardar", "error");
+            }
+
+            btnSubmit.disabled = false;
+            btnSubmit.innerHTML = `<span>Registrar Contenido</span>`;
+        });
+
+        // Inicialización
+        window.onload = () => {
+            // Establecer fecha de hoy por defecto
+            document.getElementById('fecha').valueAsDate = new Date();
+            cargarDatos();
+        };
+
+    </script>
+</body>
+</html>
