@@ -175,15 +175,13 @@
         // Funciones de API
        async function guardarDatos(datos) {
     try {
-        const respuesta = await fetch(API_URL, {
+        const response = await fetch(API_URL, {
             method: "POST",
+            body: JSON.stringify(datos),
             headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(datos)
+                "Content-Type": "text/plain;charset=utf-8"
+            }
         });
-
-        if (!respuesta.ok) throw new Error("Error en la respuesta");
 
         return true;
     } catch (error) {
@@ -191,7 +189,6 @@
         return false;
     }
 }
-
         async function cargarDatos() {
             try {
                 mostrarLoader(true);
@@ -395,4 +392,5 @@
 
     </script>
 </body>
+
 </html>
